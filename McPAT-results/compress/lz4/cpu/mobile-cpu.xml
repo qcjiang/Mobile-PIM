@@ -33,9 +33,9 @@
 		<param name="virtual_memory_page_size" value="4096"/>
 		<!-- address width determines the tag_width in Cache, LSQ and buffers in cache controller 
 			default value is machine_bits, if not set --> 
-		<stat name="total_cycles" value="166278473"/>
-		<stat name="idle_cycles" value="11696131"/>
-		<stat name="busy_cycles"  value="154582342"/>
+		<stat name="total_cycles" value="19141597200"/>
+		<stat name="idle_cycles" value="399348706"/>
+		<stat name="busy_cycles"  value="18742248494"/>
 			<!--This page size(B) is complete different from the page size in Main memo section. this page size is the size of 
 			virtual memory from OS/Archi perspective; the page size in Main memo section is the actual physical line in a DRAM bank  -->
 		<!-- *********************** cores ******************* -->
@@ -127,15 +127,15 @@
 			<param name="RAS_size" value="4"/>						
 			<!-- general stats, defines simulation periods;require total, idle, and busy cycles for sanity check  -->
 			<!-- please note: if target architecture is X86, then all the instructions refer to (fused) micro-ops -->
-			<stat name="total_instructions" value="200058831"/>
-			<stat name="int_instructions" value="194666730"/>
+			<stat name="total_instructions" value="31655245016"/>
+			<stat name="int_instructions" value="4263824445"/>
 			<stat name="fp_instructions" value="0"/>
-			<stat name="branch_instructions" value="5392101"/>
-			<stat name="branch_mispredictions" value="9819689"/>
-			<stat name="load_instructions" value="64956638"/>
-			<stat name="store_instructions" value="60481383"/>
-			<stat name="committed_instructions" value="200058831"/>
-			<stat name="committed_int_instructions" value="194666730"/>
+			<stat name="branch_instructions" value="54423092"/>
+			<stat name="branch_mispredictions" value="72735490"/>
+			<stat name="load_instructions" value="27321914676"/>
+			<stat name="store_instructions" value="15082803"/>
+			<stat name="committed_instructions" value="31655245016"/>
+			<stat name="committed_int_instructions" value="4263824445"/>
 			<stat name="committed_fp_instructions" value="0"/>
 			<stat name="pipeline_duty_cycle" value="1"/><!--<=1, runtime_ipc/peak_ipc; averaged for all cores if homogeneous -->
 			<!-- the following cycle stats are used for heterogeneous cores only, 
@@ -234,8 +234,8 @@
 				<!-- cache_policy;//0 no write or write-though with non-write allocate;1 write-back with write-allocate -->
 				<param name="buffer_sizes" value="4, 4, 4,0"/>
 				<!-- cache controller buffer sizes: miss_buffer_size(MSHR),fill_buffer_size,prefetch_buffer_size,wb_buffer_size--> 
-				<stat name="read_accesses" value="200000"/>
-				<stat name="read_misses" value="0"/>
+				<stat name="read_accesses" value="6563528883"/>
+				<stat name="read_misses" value="248342"/>
 				<stat name="conflicts" value="0"/>				
 			</component>
 			<component id="system.core0.dtlb" name="dtlb">
@@ -249,11 +249,11 @@
 				<param name="dcache_config" value="65536,8,4,1, 10,10, 32,1 "/>
 				<param name="buffer_sizes" value="4, 4, 4, 4"/>
 				<!-- cache controller buffer sizes: miss_buffer_size(MSHR),fill_buffer_size,prefetch_buffer_size,wb_buffer_size-->	
-				<stat name="read_accesses" value="800000"/>
-				<stat name="write_accesses" value="27276"/>
-				<stat name="read_misses" value="1632"/>
-				<stat name="write_misses" value="183"/>
-				<stat name="conflicts" value="0"/>	
+				<stat name="read_accesses" value="20758385793"/>
+				<stat name="write_accesses" value="0"/>
+				<stat name="read_misses" value="14836315"/>
+				<stat name="write_misses" value="0"/>
+				<stat name="conflicts" value="12"/>	
 			</component>
 			<param name="number_of_BTB" value="2"/>
 			<component id="system.core0.BTB" name="BTB">
@@ -316,10 +316,10 @@
 				<param name="ports" value="1,1,1"/>
 				<!-- number of r, w, and rw ports -->
 				<param name="device_type" value="0"/>
-				<stat name="read_accesses" value="200000"/>
-				<stat name="write_accesses" value="27276"/>
-				<stat name="read_misses" value="1632"/>
-				<stat name="write_misses" value="183"/>
+				<stat name="read_accesses" value="15084657"/>
+				<stat name="write_accesses" value="15082803"/>
+				<stat name="read_misses" value="13673685"/>
+				<stat name="write_misses" value="3193547"/>
 				<stat name="conflicts" value="0"/>	
 			    <stat name="duty_cycle" value="1.0"/>	
 		</component>

@@ -5,7 +5,7 @@
 		<!--Duty cycles in this file are set according to "ARM MPcore
 			ARchitecture performance Enhancement" in MPF Japan 2008 -->
 		<param name="number_of_cores" value="1"/>
-		<param name="number_of_L1Directories" value="1"/>
+		<param name="number_of_L1Directories" value="0"/>
 		<param name="number_of_L2Directories" value="0"/>
 		<param name="number_of_L2s" value="0"/> <!-- This number means how many L2 clusters in each cluster there can be multiple banks/ports -->
 		<param name="Private_L2" value="0"/><!--1 Private, 0 shared/coherent -->
@@ -33,9 +33,9 @@
 		<param name="virtual_memory_page_size" value="4096"/>
 		<!-- address width determines the tag_width in Cache, LSQ and buffers in cache controller 
 			default value is machine_bits, if not set --> 
-		<stat name="total_cycles" value="268803503"/>
-		<stat name="idle_cycles" value="67890074"/>
-		<stat name="busy_cycles"  value="200913429"/>
+		<stat name="total_cycles" value="37264115821"/>
+		<stat name="idle_cycles" value="5474755207"/>
+		<stat name="busy_cycles"  value="31789360614"/>
 			<!--This page size(B) is complete different from the page size in Main memo section. this page size is the size of 
 			virtual memory from OS/Archi perspective; the page size in Main memo section is the actual physical line in a DRAM bank  -->
 		<!-- *********************** cores ******************* -->
@@ -127,12 +127,12 @@
 			<param name="RAS_size" value="4"/>						
 			<!-- general stats, defines simulation periods;require total, idle, and busy cycles for sanity check  -->
 			<!-- please note: if target architecture is X86, then all the instructions refer to (fused) micro-ops -->
-			<stat name="total_instructions" value="200058993"/>
+			<stat name="total_instructions" value="31655244957"/>
 			<stat name="int_instructions" value="200058993"/>
 			<stat name="fp_instructions" value="0"/>
 			<stat name="branch_instructions" value="0"/>
 			<stat name="branch_mispredictions" value="0"/>
-			<stat name="load_instructions" value="0"/>
+			<stat name="load_instructions" value="26967821116"/>
 			<stat name="store_instructions" value="50000"/>
 			<stat name="committed_instructions" value="200058993"/>
 			<stat name="committed_int_instructions" value="200058993"/>
