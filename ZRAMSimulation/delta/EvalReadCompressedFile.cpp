@@ -7,7 +7,7 @@
 #include "ZSwapTest.h"
 #include <algorithm> 
 #include <cmath> 
-
+#include "../../../zsim_hooks.h"
 
 
 
@@ -501,6 +501,7 @@ int main(int argc, char *argv[])
 	std::vector<PageMetadata *> swapinDataPages = swapinTraceReader.GetOperationRecords();
 
 	// Step 3. decompress the data pages based on the operation records
+	zsim_begin();
 	for(int i = 0; i < swapinDataPages.size(); i++) {
 		PageMetadata *pageMetadata = swapinDataPages[i];
 		if(slot_tree.find(pageMetadata->pfn) == slot_tree.end()) { // if the pfn is not in the tree, we just skip it
@@ -518,6 +519,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
+	zsim_end();
 	std::cout << "Finished!" << std::endl;
 
 
