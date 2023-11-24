@@ -7,7 +7,7 @@
 #include "ZSwapTest.h"
 #include <algorithm> 
 #include <cmath> 
-#include "../../../zsim_hooks.h"
+
 
 
 
@@ -74,6 +74,9 @@ int parse_args(int argc, char *argv[])
 }
 
 void CopyXPagesToVector(const std::vector<DataPage*>& dataPages, std::vector<uint32_t>& targetVector, uint32_t pagesize, uint32_t inp_X, uint32_t start_page) {
+
+
+	targetVector.clear() ; 
 	size_t totalSize = inp_X * pagesize;
 
 	// Resize the target vector to accommodate the data
@@ -98,7 +101,7 @@ void CopyXPagesToVector(const std::vector<DataPage*>& dataPages, std::vector<uin
 
 
 
-void BaseDeltaComp(const uint32_t  *data, size_t size,uint32_t inp_X, uint32_t len_base,
+int BaseDeltaComp(const uint32_t  *data, size_t size,uint32_t inp_X, uint32_t len_base,
 		std::vector<uint32_t>& base_array,
 		std::vector<uint32_t>& val_array,
 		std::vector<uint32_t>& baseid_array,
@@ -108,6 +111,11 @@ void BaseDeltaComp(const uint32_t  *data, size_t size,uint32_t inp_X, uint32_t l
 	uint32_t unique_base = 0;
 	std::map<uint32_t, uint32_t> base_to_id;
 	std::map<uint32_t, size_t> base_count_map;
+
+	base_array.clear();
+	val_array.clear();
+	baseid_array.clear();
+
 
 	for (size_t i = 0; i < size / sizeof(uint32_t); ++i) {
 		uint32_t base_data = data[i] >> (8 - len_base) * 4;
@@ -136,23 +144,50 @@ void BaseDeltaComp(const uint32_t  *data, size_t size,uint32_t inp_X, uint32_t l
 		}
 	}
 
-	std::vector<std::pair<uint32_t, size_t>> sorted_base_count(base_count_map.begin(), base_count_map.end());
-	std::sort(sorted_base_count.begin(), sorted_base_count.end(),
-			[](const auto& a, const auto& b) { return a.second > b.second; });
+	/*
+	   std::vector<std::pair<uint32_t, size_t>> sorted_base_count(base_count_map.begin(), base_count_map.end());
+	   std::sort(sorted_base_count.begin(), sorted_base_count.end(),
+	   [](const auto& a, const auto& b) { return a.second > b.second; });
 
 
-	size_t count = 0 ;
-	size_t compressed_count = 0 ;
-	std::vector <uint32_t > top_bases  ; 
+	   uint32_t count = 0 ;
+	   uint32_t compressed_count = 0 ;
+	   std::vector <uint32_t > top_bases(num_bases)  ; 
 
 
-	std::for_each(sorted_base_count.begin(), sorted_base_count.begin() + num_bases,
-			[&count,&top_bases,&compressed_count](const auto& pair) {
-			std::cout << "Base: " <<"0x" <<std::hex << pair.first << ",No of Values: " << pair.second << std::endl;
-			top_bases.push_back(pair.first); 
-			compressed_count = compressed_count + pair.second ; //no of values that will be compressed. 
-			++count;
-			});
+	   std::for_each(sorted_base_count.begin(), sorted_base_count.begin() + num_bases,
+	   [&count,&top_bases,&compressed_count](const auto& pair) {
+	   std::cout << "Base: " <<"0x" <<std::hex << pair.first << ",No of Values: " << pair.second << std::endl;
+	   top_bases.push_back(pair.first); 
+	   compressed_count = compressed_count + pair.second ; //no of values that will be compressed. 
+	   ++count;
+	   });
+
+*/
+	  std::vector<std::pair<uint32_t, size_t>> sorted_base_count(base_count_map.begin(), base_count_map.end());
+
+    // Sort the vector based on counts in descending order
+    std::sort(sorted_base_count.begin(), sorted_base_count.end(),
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+
+    // Display the sorted information and accumulate counts
+    uint32_t count = 0;
+    uint32_t compressed_count = 0;
+    std::vector<uint32_t> top_bases;
+
+    // Ensure num_bases is not greater than the size of sorted_base_count
+    size_t effective_num_bases = std::min(static_cast<size_t>(num_bases), sorted_base_count.size());
+
+    // Iterate over the top elements and print information
+    for (size_t i = 0; i < effective_num_bases; ++i) {
+ //       std::cout << "Base: 0x" << std::hex << sorted_base_count[i].first
+   //               << ", No of Values: " << sorted_base_count[i].second << std::endl;
+
+        top_bases.push_back(sorted_base_count[i].first);
+        compressed_count += sorted_base_count[i].second;
+        ++count;
+    }
+	
 
 	//Printing the top bases. 
 	/*
@@ -189,179 +224,196 @@ void BaseDeltaComp(const uint32_t  *data, size_t size,uint32_t inp_X, uint32_t l
 
 	rounded_bits = std::ceil(total_bits / 8.0) * 8;
 
-	std::cout<<"Total bits: "<<total_bits <<" Rounded_bits: "<<rounded_bits <<std::endl; 
+//	std::cout<<"Total bits: "<<total_bits <<" Rounded_bits: "<<rounded_bits <<std::endl; 
 
 	uint32_t compressed_buffer_size = rounded_bits/8 ; 
 
 	uint32_t num_pages_needed = std::ceil (compressed_buffer_size/4096.0) ; 	 	
+
+	if (num_pages_needed >= inp_X)
+		num_pages_needed = inp_X; 
+
 
 	cout <<"Compressed buffer size:  "<<compressed_buffer_size <<" Num of pages needed: "<<num_pages_needed <<std::endl ; 
 
 	if ( num_pages_needed == inp_X)
 		cout<<"No compression needed: " <<endl ;
 	else
+	{
 		cout<<"Performing BaseDelta compression: "<<endl; 	 
 
 
-	uint32_t BD_comp_buffersize = num_pages_needed*4096 ; 
+		uint32_t BD_comp_buffersize = num_pages_needed*4096 ; 
 
 
-	//Forming the base buffer. 
-	uint32_t  base_size = ((32 - ( 8 - len_base )*4 )/8) ; //24 bit, (3 byte) and always should be multiple of 8. 
-	char *base_buffer = new char  [num_bases*base_size] ;
+		//Forming the base buffer. 
+		uint32_t  base_size = ((32 - ( 8 - len_base )*4 )/8) ; //24 bit, (3 byte) and always should be multiple of 8. 
+		//	char *base_buffer = new char  [num_bases*base_size] ;
 
-	std::cout <<"base buffer size: "<< base_size*num_bases <<std::endl;
+		std::vector <char> base_buffer(num_bases*base_size); 
 
-	for (int i = 0 ; i < num_bases ; i++)
-	{
-		for (int j = 0 ; j < base_size ; j++) {
+//		std::cout <<"base buffer size: "<< base_size*num_bases <<std::endl;
 
-			base_buffer[i*base_size + j ] =  ((top_bases[i] >> 8*j) & 0xFF)  ;
+		for (int i = 0 ; i < num_bases ; i++)
+		{
+			for (int j = 0 ; j < base_size ; j++) {
+
+				base_buffer[i*base_size + j ] =  ((top_bases[i] >> 8*j) & 0xFF)  ;
+			}
 		}
-	}
 
-	//memcpy (bd_compressed_buffer,base_buffer, num_bases*base_size);
-	//Copy the number of compressed values to bd_compressed_buffer. 
-	// memcpy (bd_compressed_buffer + num_bases*size , &compressed_count,4 ); //32b for total number of compressed vals, file end with this number.   
+		//memcpy (bd_compressed_buffer,base_buffer, num_bases*base_size);
+		//Copy the number of compressed values to bd_compressed_buffer. 
+		// memcpy (bd_compressed_buffer + num_bases*size , &compressed_count,4 ); //32b for total number of compressed vals, file end with this number.   
 
-	uint32_t bit_count = 0;
-	uint32_t byte_transfer = 0;
-	uint32_t byte_count = 0;
+		uint32_t bit_count = 0;
+		uint32_t byte_transfer = 0;
+		uint32_t byte_count = 0;
 
-	uint32_t data_bits = 0 ;
-	uint32_t rounded_data_bits = 0 ;
+		uint32_t data_bits = 0 ;
+		uint32_t rounded_data_bits = 0 ;
 
-	//Bits corresponding to just data. 
-	data_bits  = total_vals*1  +  ((8-len_base)*4 + logNbases)*compressed_count + (total_vals - compressed_count)*32  ;
-	rounded_data_bits = std::ceil(data_bits / 8.0) * 8;
+		//Bits corresponding to just data. 
+		data_bits  = total_vals*1  +  ((8-len_base)*4 + logNbases)*compressed_count + (total_vals - compressed_count)*32  ;
+		rounded_data_bits = std::ceil(data_bits / 8.0) * 8;
 
-	uint32_t data_buffer_size = rounded_data_bits/8 ; 
-	std::cout <<"Data bits: "<<data_bits <<" Rounded data bits: "<<rounded_data_bits <<" Data buf size: "<<data_buffer_size << std::endl;
+		uint32_t data_buffer_size = rounded_data_bits/8 ; 
+//		std::cout <<"Data bits: "<<data_bits <<" Rounded data bits: "<<rounded_data_bits <<" Data buf size: "<<data_buffer_size << std::endl;
 
-	char *data_buffer = new char  [data_buffer_size] ;
-	uint32_t f_count = 0 ; 
-	
-	uint64_t stream_val = 0 ; //64 bits to fit everything.  
-	uint64_t transfer_stream_val = 0 ; //64 bits to fit everything.  
-
-	uint32_t base_index = 0; 
-	uint32_t flag = 0 ;
-	uint32_t offset = 0;
-	uint32_t shift = 0; 
-	uint8_t flag1 = 0; 
-	uint64_t mask = 0 ; 
-
-	uint8_t v_byte[2] ;
-	uint16_t v1_byte ; //Fitting the assumption  ( 8 + 1 + logNbases  < 16 )
+		//char *data_buffer = new char  [data_buffer_size] ;
+		std::vector <char> data_buffer(data_buffer_size) ;
 
 
-	for (size_t i = 0; i < size / sizeof(uint32_t); ++i) {
+		uint32_t f_count = 0 ; 
 
-		uint32_t b_data = data[i] >> (8 - len_base) * 4;
-		uint32_t v_data = data[i] & 0xFF;
+		uint64_t stream_val = 0 ; //64 bits to fit everything.  
+		uint64_t transfer_stream_val = 0 ; //64 bits to fit everything.  
 
-		auto it = std::find(top_bases.begin(), top_bases.end(), b_data);
-		
+		uint32_t base_index = 0; 
+		uint32_t flag = 0 ;
+		uint32_t offset = 0;
+		uint32_t shift = 0; 
+		uint8_t flag1 = 0; 
+		uint64_t mask = 0 ; 
 
-		if (it != top_bases.end()) {
-			
-			//Val compressed:
-			//Total size: 1b (flag) + log   8b (v_data)  			
-			base_index = std::distance (top_bases.begin(), it) ; 
-		//	std::cout <<" Base index: "<<base_index<<" val_data : "<<v_data<<std::endl ;
-		
-			offset = bit_count ; 
-			//Write new bits to offset.
-					
-			shift = 8 + logNbases + 1 ;
-			bit_count = bit_count  + shift ; 		
-			flag = 1 ; 
-			byte_transfer = bit_count / 8 ; //No of bytes to transfer		
-			bit_count = bit_count % 8 ;  //No of bits still remaining in the buffer. 
-	
-			//stream buf currently has offset bits (old bit count).
-			// New bits: 8 + logNbases + 1 (shift)
-			// Current bits are shifted -> (shift) towards left. 
-			//assumption: 8 + logN + 1 < 16 (fits in 2 bytes). 
-			
-		//	std::cout<<"Flag: "<<flag <<" Offset: "<<offset  << " Bit count: "<<bit_count << " Byte transfer: "<< byte_transfer <<" Byte count: "<<byte_count <<endl; 
+		uint8_t v_byte[2] ;
+		uint16_t v1_byte ; //Fitting the assumption  ( 8 + 1 + logNbases  < 16 )
 
-			v_byte[0] = (uint8_t) v_data ; //8 value bits are copied.
-			v_byte[1]  = (uint8_t) ( base_index & 0xFF)  ; 
-			uint8_t flag1 = 1 << logNbases ;
-			//appending flag. 
-			v_byte[1] = flag1 | v_byte[1]; 
-			v1_byte = (v_byte[1] << 8 ) | v_byte[0] ; 
-		
-			//std::cout <<"Base index: "<<base_index <<" v_data  " << v_data << " v1_byte  " <<v1_byte <<std::endl;  
 
-			stream_val =  (stream_val << shift ) | v1_byte ; 		
-			transfer_stream_val = stream_val >> bit_count ; //These bytes will be transfered to buffer. 
-			mask = ( 1ULL << bit_count )  -1 ; 	
-			stream_val = stream_val & mask ; //preserve the remaining bits. 
+		for (size_t i = 0; i < size / sizeof(uint32_t); ++i) {
 
-			for (uint32_t k = 0 ; k < byte_transfer ; k ++)
-			{
-				
-				data_buffer[byte_count + k ] = (((transfer_stream_val) >> 8*(byte_transfer - k - 1)) & 0xFF); 
+			uint32_t b_data = data[i] >> (8 - len_base) * 4;
+			uint32_t v_data = data[i] & 0xFF;
+
+			auto it = std::find(top_bases.begin(), top_bases.end(), b_data);
+
+
+			if (it != top_bases.end()) {
+
+				//Val compressed:
+				//Total size: 1b (flag) + log   8b (v_data)  			
+				base_index = std::distance (top_bases.begin(), it) ; 
+				//	std::cout <<" Base index: "<<base_index<<" val_data : "<<v_data<<std::endl ;
+
+				offset = bit_count ; 
+				//Write new bits to offset.
+
+				shift = 8 + logNbases + 1 ;
+				bit_count = bit_count  + shift ; 		
+				flag = 1 ; 
+				byte_transfer = bit_count / 8 ; //No of bytes to transfer		
+				bit_count = bit_count % 8 ;  //No of bits still remaining in the buffer. 
+
+				//stream buf currently has offset bits (old bit count).
+				// New bits: 8 + logNbases + 1 (shift)
+				// Current bits are shifted -> (shift) towards left. 
+				//assumption: 8 + logN + 1 < 16 (fits in 2 bytes). 
+
+				//	std::cout<<"Flag: "<<flag <<" Offset: "<<offset  << " Bit count: "<<bit_count << " Byte transfer: "<< byte_transfer <<" Byte count: "<<byte_count <<endl; 
+
+				v_byte[0] = (uint8_t) v_data ; //8 value bits are copied.
+				v_byte[1]  = (uint8_t) ( base_index & 0xFF)  ; 
+				uint8_t flag1 = 1 << logNbases ;
+				//appending flag. 
+				v_byte[1] = flag1 | v_byte[1]; 
+				v1_byte = (v_byte[1] << 8 ) | v_byte[0] ; 
+
+				//std::cout <<"Base index: "<<base_index <<" v_data  " << v_data << " v1_byte  " <<v1_byte <<std::endl;  
+
+				stream_val =  (stream_val << shift ) | v1_byte ; 		
+				transfer_stream_val = stream_val >> bit_count ; //These bytes will be transfered to buffer. 
+				mask = ( 1ULL << bit_count )  -1 ; 	
+				stream_val = stream_val & mask ; //preserve the remaining bits. 
+
+				for (uint32_t k = 0 ; k < byte_transfer ; k ++)
+				{
+
+					data_buffer[byte_count + k ] = (((transfer_stream_val) >> 8*(byte_transfer - k - 1)) & 0xFF); 
+
+				}
+
+				byte_count = byte_count + byte_transfer ; 		
+
+				//	std::cout <<"no of vals transferred: "<<byte_transfer << " value transferred: "<<transfer_stream_val << " bits remain: "<<bit_count << std::endl ;
+
+				//	std::cout << "Base: "<< b_data <<" Value: "<<v_data << " Base Index: "<< base_index << " v1 byte " << v1_byte <<" transfer stream val: " << transfer_stream_val << " stream val: "<<stream_val <<std::endl ; 		
 
 			}
 
-			byte_count = byte_count + byte_transfer ; 		
+			else {
+				//	std::cout <<" Base value: "<<b_data<<" val_data : "<<v_data<<std::endl ;
+				flag = 0 ; 
+				offset = bit_count ; 
+				shift = 32 + 1 ; 
+				bit_count = bit_count + shift ; 
+				byte_transfer = bit_count / 8 ; //No of bytes to transfer		
+				bit_count = bit_count % 8 ; 
+				//	std::cout<<"Flag: "<<flag <<" Offset: "<<offset  << " Bit count: "<<bit_count << " Byte transfer: "<< byte_transfer<<" Byte Count: "<<byte_count <<endl; 
+				//appending 32 bit data to stream val.
+				//Flag is automatically set to 0 when we shift 33 bits. 
 
-		//	std::cout <<"no of vals transferred: "<<byte_transfer << " value transferred: "<<transfer_stream_val << " bits remain: "<<bit_count << std::endl ;
 
-		//	std::cout << "Base: "<< b_data <<" Value: "<<v_data << " Base Index: "<< base_index << " v1 byte " << v1_byte <<" transfer stream val: " << transfer_stream_val << " stream val: "<<stream_val <<std::endl ; 		
+
+				stream_val =  (stream_val << shift ) | data[i]  ; 		
+				transfer_stream_val = stream_val >> bit_count ; //These bytes will be transfered to buffer. 
+				mask = ( 1ULL << bit_count )  -1 ;
+				stream_val = stream_val & mask ; //preserve the remaining bits. 
+
+				for (uint32_t k = 0 ; k < byte_transfer ; k ++)
+				{
+
+					data_buffer[byte_count + k ] = (((transfer_stream_val) >> 8*(byte_transfer - k - 1)) & 0xFF);
+
+				}
+
+				//	std::cout <<"no of vals transferred: "<<byte_transfer << " value transferred: "<<transfer_stream_val << " bits remain: "<<bit_count << std::endl ;
+				//	std::cout << "Base: "<< b_data <<" Value: "<< v_data  << " stream val: "<<stream_val <<std::endl ; 		
+
+				byte_count = byte_count + byte_transfer ; 		
+
+
+			}		
+
 
 		}
-	       
-		else {
-		//	std::cout <<" Base value: "<<b_data<<" val_data : "<<v_data<<std::endl ;
-			flag = 0 ; 
-			offset = bit_count ; 
-			shift = 32 + 1 ; 
-			bit_count = bit_count + shift ; 
-			byte_transfer = bit_count / 8 ; //No of bytes to transfer		
-			bit_count = bit_count % 8 ; 
-		//	std::cout<<"Flag: "<<flag <<" Offset: "<<offset  << " Bit count: "<<bit_count << " Byte transfer: "<< byte_transfer<<" Byte Count: "<<byte_count <<endl; 
-			//appending 32 bit data to stream val.
-			//Flag is automatically set to 0 when we shift 33 bits. 
+	//	std::cout <<" No of bytes transferred: "<< byte_count << " bits remaining in buffer: "<<bit_count << " value remaining in buffer: "<< stream_val <<std::endl ;
 
-		
-				
-			stream_val =  (stream_val << shift ) | data[i]  ; 		
-			transfer_stream_val = stream_val >> bit_count ; //These bytes will be transfered to buffer. 
-                        mask = ( 1ULL << bit_count )  -1 ;
-                        stream_val = stream_val & mask ; //preserve the remaining bits. 
 
-                        for (uint32_t k = 0 ; k < byte_transfer ; k ++)
-                        {
+		//Handling last byte. 
 
-                                data_buffer[byte_count + k ] = (((transfer_stream_val) >> 8*(byte_transfer - k - 1)) & 0xFF);
+		if ( bit_count != 0) {
+			char last_val = ((stream_val | 0xFF) << (8 - bit_count));
+			data_buffer[data_buffer_size- 1] = last_val; 	
+		}
 
-                        }
-		
-		//	std::cout <<"no of vals transferred: "<<byte_transfer << " value transferred: "<<transfer_stream_val << " bits remain: "<<bit_count << std::endl ;
-		//	std::cout << "Base: "<< b_data <<" Value: "<< v_data  << " stream val: "<<stream_val <<std::endl ; 		
 
-			byte_count = byte_count + byte_transfer ; 		
-			
-		
-		}		
-
+		//	delete [] base_buffer ;
+		//	delete [] data_buffer ;
 
 	}
-	std::cout <<" No of bytes transferred: "<< byte_count << " bits remaining in buffer: "<<bit_count << " value remaining in buffer: "<< stream_val <<std::endl ;
-		
-
-	//Handling last byte. 
-	char last_val = ((stream_val | 0xFF) << (8 - bit_count));
-	data_buffer[data_buffer_size- 1] = last_val; 	
-
-	delete [] base_buffer ;
-	delete [] data_buffer ;
 
 
+	return num_pages_needed ; 
 
 }
 
@@ -435,6 +487,7 @@ int prepare_read_evaluation_env(std::map<int, ZRamBufferSlot *>& slot_tree, std:
 		//4) Fill the output buffer to slots. 
 
 		std::cout <<"Size of buffer: "<< totalBufferSize <<std::endl ; 		 	
+		std::cout <<"Total no.of pages : "<< dataPages.size() <<std::endl ; 		 	
 
 		uint32_t pagesize = totalBufferSize/dataPages.size(); 	
 
@@ -442,7 +495,6 @@ int prepare_read_evaluation_env(std::map<int, ZRamBufferSlot *>& slot_tree, std:
 		std::vector<uint32_t> data ; 
 		uint32_t start_page = 0 ; //page offset.  
 
-		CopyXPagesToVector(dataPages, data,pagesize, inp_X, start_page);
 
 		// Define len_base
 		uint32_t len_base = 6;  //6 bits. 
@@ -455,19 +507,30 @@ int prepare_read_evaluation_env(std::map<int, ZRamBufferSlot *>& slot_tree, std:
 		std::vector<uint32_t> baseid_array;
 		uint32_t  num_bases =  8 ; 
 
+		uint32_t num_iters = dataPages.size()/inp_X; 
+
+		uint32_t total_slots = 0;
+		uint32_t num_slots = 0;
 
 
-		// Process the data
-		BaseDeltaComp(data.data(), data.size() * sizeof(uint32_t), inp_X, len_base, base_array, val_array, baseid_array, num_bases);
+		for (int i = 0 ; i < num_iters ; i ++) {
+			CopyXPagesToVector(dataPages, data,pagesize, inp_X, start_page + i*inp_X );
+			//Compress the data. 		
+		num_slots = BaseDeltaComp(data.data(), data.size() * sizeof(uint32_t), inp_X, len_base, base_array, val_array, baseid_array, num_bases);
+		
+			total_slots = total_slots + num_slots; 
+		}
 
 		// Print the results as an example:
-		std::cout << "Num of unique bases: " << base_array.size() << std::endl;
+//		std::cout << "Num of unique bases: " << base_array.size() << std::endl;
 		//		std::cout << "Num of bytes read: " << val_array.size() << std::endl;
 
-		std::ofstream BD0_compfile ("BD0_comp.bin",std::ios::binary); 
+//		std::ofstream BD0_compfile ("BD0_comp.bin",std::ios::binary); 
 
 		uint32_t logNbases = static_cast<uint32_t>(log2(static_cast<double>(num_bases))) ;
-		std::cout <<"logNbases : "<<logNbases <<std::endl; 	
+//		std::cout <<"logNbases : "<<logNbases <<std::endl; 	
+		
+		std::cout <<"total slots needed: "<<total_slots <<std::endl ;
 
 	}
 	return 0;
@@ -501,7 +564,6 @@ int main(int argc, char *argv[])
 	std::vector<PageMetadata *> swapinDataPages = swapinTraceReader.GetOperationRecords();
 
 	// Step 3. decompress the data pages based on the operation records
-	zsim_begin();
 	for(int i = 0; i < swapinDataPages.size(); i++) {
 		PageMetadata *pageMetadata = swapinDataPages[i];
 		if(slot_tree.find(pageMetadata->pfn) == slot_tree.end()) { // if the pfn is not in the tree, we just skip it
@@ -519,7 +581,6 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
-	zsim_end();
 	std::cout << "Finished!" << std::endl;
 
 
@@ -527,4 +588,3 @@ int main(int argc, char *argv[])
 	// we just make sure that there is not memory leak during the execution of the program
 	return 0;
 }
-
