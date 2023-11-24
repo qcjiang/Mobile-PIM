@@ -1,0 +1,20 @@
+Total No. of pages : 198238
+Size of buffer: 811982848
+Base: 0x0,No of Values: 14d
+Base: 0x70e703,No of Values: 25
+Base: 0x19195b,No of Values: 13
+Base: 0x19195d,No of Values: f
+Base: 0x223a22,No of Values: e
+Base: 0x191960,No of Values: d
+Base: 0x2,No of Values: d
+Base: 0x19195e,No of Values: d
+Number of values in the file: c00 no. of values to be compressed: 1c9
+Total bits: 16763 Rounded_bits: 16768
+Compressed buffer size:  2ced Num of pages needed: 3
+No compression needed: 
+base buffer size: 18
+Data bits: 16683 Rounded data bits: 16688 Data buf size: 2cd1
+ No of bytes transferred: 2cd0 bits remaining in buffer: 3 value remaining in buffer: 0
+Num of unique bases: 717
+logNbases : 3
+Finished!

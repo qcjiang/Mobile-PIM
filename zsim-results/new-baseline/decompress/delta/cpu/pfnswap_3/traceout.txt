@@ -1,0 +1,20 @@
+Total No. of pages : 180368
+Size of buffer: 738787328
+Base: 0x0,No of Values: 6f4
+Base: 0x6f7c14,No of Values: 1d6
+Base: 0x27,No of Values: 3e
+Base: 0x103900,No of Values: 22
+Base: 0x103800,No of Values: 1d
+Base: 0x100800,No of Values: 1b
+Base: 0x25,No of Values: 1a
+Base: 0x26,No of Values: 10
+Number of values in the file: c00 no. of values to be compressed: 98c
+Total bits: c464 Rounded_bits: c468
+Compressed buffer size:  188d Num of pages needed: 2
+Performing BaseDelta compression: 
+base buffer size: 18
+Data bits: c384 Rounded data bits: c388 Data buf size: 1871
+ No of bytes transferred: 1870 bits remaining in buffer: 4 value remaining in buffer: 0
+Num of unique bases: f4
+logNbases : 3
+Finished!
